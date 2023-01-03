@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        canvas {
+            border: 1px solid #d3d3d3;
+
+        }
+    </style>
+</head>
+
+<body style="background-color:black;" onload="startGame()">
+    <script>
+
+
+
+
+        let myGamePiece;
+        let myObstacles = [];
+        let myScore;
+
+        let background = new Image();
+        background.src = "https://media.istockphoto.com/photos/earth-night-space-picture-id1070110506?k=6&m=1070110506&s=170667a&w=0&h=kDJfBhSJoSolWh4Bmjd0JABcHKOGCF1MT2Vgf7AkR30=";
+
+
+        let avatar = new Image();
+        avatar.src = "pngaaa.com-1154804.png";
+
+
+        let enemy = new Image();
+        enemy.src = "pngaaa.com-1154722.png"
+
+        let enemy2 = new Image();
+        enemy2.src = "pngaaa.com-1768159.png"
+
+
+        class Component {
+            constructor(width, height, color, x, y, type) {
+                this.type = type;
+                this.score = 0;
+                this.width = width;
+                this.height = height;
+                this.speedX = 0;
+                this.speedY = 0;
+                this.x = x;
+                this.y = y;
+                this.gravity = 0;
+                this.gravitySpeed = 0;
+                this.color = color;
+            }
+            update() {
+                const ctx = myGameArea.context;
+                if (this.type == "text") {
+                    ctx.font = this.width + " " + this.height;
+                    ctx.fillStyle = this.color;
+                    ctx.fillText(this.text, this.x, this.y);
+                } else {
+                    ctx.drawImage(avatar, this.x, this.y, this.width, this.height)
+                }
+            }
+            newPos() {
+                const ctx = this.context;
+                this.gravitySpeed += this.gravity;
+                this.x += this.speedX;
+                this.y += this.speedY + this.gravitySpeed;
+                // <!-- this.getContext("2d").rotate(20 * Math.PI / 180)
+
+                this.hitBottom();
+            }
+            hitBottom() {
+                let rockbottom = myGameArea.canvas.height - this.height;
+                if (this.y > rockbottom) {
+                    this.y = rockbottom;
+                    this.gravitySpeed = 0;
+                }
+            }
+            crashWith(otherobj) {
+                let myleft = this.x;
+                let myright = this.x + (this.width);
+                let mytop = this.y;
+                let mybottom = this.y + (this.height);
+                let otherleft = otherobj.x;
+                let otherright = otherobj.x + (otherobj.width);
+                let othertop = otherobj.y;
+                let otherbottom = otherobj.y + (otherobj.height);
+
+                let crash = true;
+                if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+                    crash = false;
+
+                }
+                return crash;
+            }
+        }
+
+
+
+
+        class ObstComponent {
+            constructor(width, height, color, x, y, enemyType) {
+                this.type = enemyType;
+                this.score = 0;
+                this.width = width;
+                this.height = height;
+                this.speedX = 0;
+                this.speedY = 0;
+                this.x = x;
+                this.y = y;
+                this.gravity = 0;
+                this.gravitySpeed = 0;
+                this.color = color;
+                this.enemyType = enemyType;
+            }
+            update() {
+                const ctx = myGameArea.context;
+                if (this.type == "text") {
+                    ctx.font = this.width + " " + this.height;
+                    ctx.fillStyle = this.color;
+                    ctx.fillText(this.text, this.x, this.y);
+                } else {
+                    if (this.enemyType == "enemy") {
+                        ctx.drawImage(enemy, this.x, this.y, this.width, this.height)
+                    }
+
+                    if (this.enemyType == "enemy2") {
+                        ctx.drawImage(enemy2, this.x, this.y, this.width, this.height)
+                    }
+                }
+            }
+            newPos() {
+                const ctx = this.context;
+                this.gravitySpeed += this.gravity;
+                this.x += this.speedX;
+                this.y += this.speedY + this.gravitySpeed;
+                // <!-- this.getContext("2d").rotate(20 * Math.PI / 180)
+
+                this.hitBottom();
+            }
+            hitBottom() {
+                let rockbottom = myGameArea.canvas.height - this.height;
+                if (this.y > rockbottom) {
+                    this.y = rockbottom;
+                    this.gravitySpeed = 0;
+                }
+            }
+            crashWith(otherobj) {
+                let myleft = this.x;
+                let myright = this.x + (this.width);
+                let mytop = this.y;
+                let mybottom = this.y + (this.height);
+                let otherleft = otherobj.x;
+                let otherright = otherobj.x + (otherobj.width);
+                let othertop = otherobj.y;
+                let otherbottom = otherobj.y + (otherobj.height);
+
+                let crash = true;
+                if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+                    crash = false;
+
+                }
+                return crash;
+            }
+        }
+
+
+
+
+        function startGame() {
+            myGamePiece = new Component(75, 40, "red", 10, 120);
+            myGamePiece.gravity = 0.02;
+            myScore = new Component("30px", "Consolas", "white", 280, 40, "text");
+            myGameArea.start();
+        }
+
+        let myGameArea = {
+            canvas: document.createElement("canvas"),
+            start: function () {
+                this.canvas.width = 480;
+                this.canvas.height = 270;
+                this.context = this.canvas.getContext("2d");
+                document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+                this.frameNo = 0;
+                this.interval = setInterval(updateGameArea, 15);
+                this.context.drawImage(background, 0, 0);
+            },
+            clear: function () {
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.context.drawImage(background, 0, 0);
+            }
+        }
+
+
+
+
+
+        function updateGameArea() {
+            let x, height, gap, minHeight, maxHeight, minGap, maxGap;
+            for (i = 0; i < myObstacles.length; i += 1) {
+                if (myGamePiece.crashWith(myObstacles[i])) {
+                    background.src = "https://i.ytimg.com/vi/3WbiAJvCcGo/hqdefault.jpg";
+                    myScore = new Component("30px", "Consolas", "white", 280, 40, "text");
+                    avatar.src = "pngaaa.com-4716223.png";
+
+                    enemy2.src = "pngaaa.com-2421281.png"
+                    enemy.src = "pngaaa.com-2421281.png"
+
+                }
+            }
+            myGameArea.clear();
+            myGameArea.frameNo += 1;
+            if (myGameArea.frameNo == 1 || everyinterval(150)) {
+                x = myGameArea.canvas.width;
+                minHeight = 20;
+                maxHeight = 200;
+                height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+                minGap = 50;
+                maxGap = 200;
+                gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+                myObstacles.push(new ObstComponent(100, 50, "blue", x, 0, "enemy"));
+                myObstacles.push(new ObstComponent(40, 50, "yellow", x, height + gap, "enemy2"));
+            }
+            for (i = 0; i < myObstacles.length; i += 1) {
+                myObstacles[i].x += -1;
+                myObstacles[i].update();
+            }
+            myScore.text = "MILES: " + myGameArea.frameNo;
+            myScore.update();
+            myGamePiece.newPos();
+            myGamePiece.update();
+        }
+
+        function everyinterval(n) {
+            if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
+            return false;
+        }
+
+        function accelerate(n) {
+            myGamePiece.gravity = n;
+        }
+
+
+        function speedUp(n) {
+            setInterval(updateGameArea, 5);
+            background.src = "https://tse4.mm.bing.net/th?id=OIP.QvGYvGUBKiyia3Zc5GKUCgHaEK&pid=Api&P=0";
+        }
+
+    </script>
+    <br>
+    <button onmousedown="accelerate(-0.2)" onmouseup="accelerate(0.05)">FLY UP</button>
+    <button onmousedown="speedUp(2)" onmouseup="speedUp(0.5)">Hyperspeed!!</button>
+    <p>Use the ACCELERATE button to stay in the air</p>
+    <p>How long can you stay alive?</p>
+
+</body>
+
+</html>
